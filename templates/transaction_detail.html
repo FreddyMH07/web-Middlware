@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Detail - SAGAPI-Proto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-file-alt"></i> Transaction Detail - {{ transaction[1] }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Transactions
+            </a>
+            <button onclick="window.print()" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <button onclick="exportToExcel()" class="btn btn-sm btn-success">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Header Information -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> Transaction Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="40%">Document No:</th>
+                        <td><strong>{{ transaction[1] }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Timestamp:</th>
+                        <td>{{ transaction[2] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Partner:</th>
+                        <td>{{ transaction[3] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Journal:</th>
+                        <td>{{ transaction[4] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date Order:</th>
+                        <td>{{ transaction[5] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Officers:</th>
+                        <td>{{ transaction[6] }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-truck"></i> Logistics Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="40%">Driver Name:</th>
+                        <td>{{ transaction[8] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Vehicle No:</th>
+                        <td><span class="badge bg-secondary">{{ transaction[9] }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Destination:</th>
+                        <td>{{ transaction[10] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Branch:</th>
+                        <td>{{ transaction[11] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Description:</th>
+                        <td>{{ transaction[7] or '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Lines Detail Table -->
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0"><i class="fas fa-list"></i> Order Lines Detail</h5>
+    </div>
+    <div class="card-body">
+        {% if order_lines %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="orderLinesTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>No</th>
+                        <th>Product Code</th>
+                        <th>Qty Brutto (kg)</th>
+                        <th>Qty Tara (kg)</th>
+                        <th>Qty Netto (kg)</th>
+                        <th>UOM</th>
+                        <th>Sortation %</th>
+                        <th>Sortation Weight (kg)</th>
+                        <th>Qty Netto2 (kg)</th>
+                        <th>Price Unit (Rp)</th>
+                        <th>Product Qty</th>
+                        <th>Total Value (Rp)</th>
+                        <th>Incoming Date</th>
+                        <th>Outgoing Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in order_lines %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ line[2] }}</strong></td>
+                        <td class="text-end">{{ "{:,.2f}".format(line[3]) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(line[4]) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(line[5]) }}</td>
+                        <td>{{ line[6] }}</td>
+                        <td class="text-end">{{ "{:.1f}%".format(line[7] or 0) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(line[8] or 0) }}</td>
+                        <td class="text-end"><strong>{{ "{:,.2f}".format(line[9] or line[5]) }}</strong></td>
+                        <td class="text-end">{{ "{:,.0f}".format(line[10]) }}</td>
+                        <td class="text-end">{{ line[11] }}</td>
+                        <td class="text-end"><strong>Rp {{ "{:,.0f}".format((line[9] or line[5]) * line[10]) }}</strong></td>
+                        <td><small>{{ line[12] }}</small></td>
+                        <td><small>{{ line[13] }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="2">TOTAL</th>
+                        <th class="text-end">
+                            {% set total_brutto = 0 %}
+                            {% for line in order_lines %}
+                                {% set total_brutto = total_brutto + line[3] %}
+                            {% endfor %}
+                            {{ "{:,.2f}".format(total_brutto) }}
+                        </th>
+                        <th class="text-end">
+                            {% set total_tara = 0 %}
+                            {% for line in order_lines %}
+                                {% set total_tara = total_tara + line[4] %}
+                            {% endfor %}
+                            {{ "{:,.2f}".format(total_tara) }}
+                        </th>
+                        <th class="text-end">
+                            {% set total_netto = 0 %}
+                            {% for line in order_lines %}
+                                {% set total_netto = total_netto + line[5] %}
+                            {% endfor %}
+                            {{ "{:,.2f}".format(total_netto) }}
+                        </th>
+                        <th>-</th>
+                        <th>-</th>
+                        <th class="text-end">
+                            {% set total_sortation = 0 %}
+                            {% for line in order_lines %}
+                                {% set total_sortation = total_sortation + (line[8] or 0) %}
+                            {% endfor %}
+                            {{ "{:,.2f}".format(total_sortation) }}
+                        </th>
+                        <th class="text-end">
+                            {% set total_netto2 = 0 %}
+                            {% for line in order_lines %}
+                                {% set total_netto2 = total_netto2 + (line[9] or line[5]) %}
+                            {% endfor %}
+                            <strong>{{ "{:,.2f}".format(total_netto2) }}</strong>
+                        </th>
+                        <th>-</th>
+                        <th class="text-end">
+                            {% set total_qty = 0 %}
+                            {% for line in order_lines %}
+                                {% set total_qty = total_qty + line[11] %}
+                            {% endfor %}
+                            {{ total_qty }}
+                        </th>
+                        <th class="text-end">
+                            {% set grand_total = 0 %}
+                            {% for line in order_lines %}
+                                {% set grand_total = grand_total + ((line[9] or line[5]) * line[10]) %}
+                            {% endfor %}
+                            <strong>Rp {{ "{:,.0f}".format(grand_total) }}</strong>
+                        </th>
+                        <th colspan="2">-</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>No order lines found for this transaction</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Total Lines</h5>
+                <h3 class="text-primary">{{ order_lines|length }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Total Weight (kg)</h5>
+                <h3 class="text-success">
+                    {% set total_weight = 0 %}
+                    {% for line in order_lines %}
+                        {% set total_weight = total_weight + (line[9] or line[5]) %}
+                    {% endfor %}
+                    {{ "{:,.0f}".format(total_weight) }}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Total Value</h5>
+                <h3 class="text-warning">
+                    {% set total_value = 0 %}
+                    {% for line in order_lines %}
+                        {% set total_value = total_value + ((line[9] or line[5]) * line[10]) %}
+                    {% endfor %}
+                    Rp {{ "{:,.0f}".format(total_value) }}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Avg Price/kg</h5>
+                <h3 class="text-info">
+                    {% set avg_price = 0 %}
+                    {% if order_lines %}
+                        {% set total_weight = 0 %}
+                        {% set total_value = 0 %}
+                        {% for line in order_lines %}
+                            {% set total_weight = total_weight + (line[9] or line[5]) %}
+                            {% set total_value = total_value + ((line[9] or line[5]) * line[10]) %}
+                        {% endfor %}
+                        {% if total_weight > 0 %}
+                            {% set avg_price = total_value / total_weight %}
+                        {% endif %}
+                    {% endif %}
+                    Rp {{ "{:,.0f}".format(avg_price) }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+function exportToExcel() {
+    // Get transaction header data
+    const headerData = [
+        ['Document No', '{{ transaction[1] }}'],
+        ['Timestamp', '{{ transaction[2] }}'],
+        ['Partner', '{{ transaction[3] }}'],
+        ['Journal', '{{ transaction[4] }}'],
+        ['Date Order', '{{ transaction[5] }}'],
+        ['Officers', '{{ transaction[6] }}'],
+        ['Description', '{{ transaction[7] or "-" }}'],
+        ['Driver Name', '{{ transaction[8] }}'],
+        ['Vehicle No', '{{ transaction[9] }}'],
+        ['Destination', '{{ transaction[10] }}'],
+        ['Branch', '{{ transaction[11] }}'],
+        [], // Empty row
+        ['Order Lines Detail:'],
+        []
+    ];
+    
+    // Get table data
+    const table = document.getElementById('orderLinesTable');
+    const ws_data = [...headerData];
+    
+    // Add table headers
+    const headers = [];
+    table.querySelectorAll('thead tr th').forEach(th => {
+        headers.push(th.textContent.trim());
+    });
+    ws_data.push(headers);
+    
+    // Add table data
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => {
+            row.push(td.textContent.trim());
+        });
+        ws_data.push(row);
+    });
+    
+    // Add totals
+    const totals = [];
+    table.querySelectorAll('tfoot tr th').forEach(th => {
+        totals.push(th.textContent.trim());
+    });
+    ws_data.push(totals);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    
+    // Auto-width columns
+    const colWidths = [];
+    for (let i = 0; i < headers.length; i++) {
+        colWidths.push({wch: 15});
+    }
+    ws['!cols'] = colWidths;
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Transaction Detail');
+    
+    // Save file
+    XLSX.writeFile(wb, 'Transaction_{{ transaction[1] }}_{{ transaction[2][:10] }}.xlsx');
+}
+
+// Print styles
+window.addEventListener('beforeprint', function() {
+    document.body.classList.add('printing');
+});
+
+window.addEventListener('afterprint', function() {
+    document.body.classList.remove('printing');
+});
+</script>
+
+<style>
+@media print {
+    .btn-toolbar, .nav, .navbar { display: none !important; }
+    .card { border: 1px solid #000 !important; page-break-inside: avoid; }
+    .table th, .table td { border: 1px solid #000 !important; }
+    .printing .container-fluid { margin: 0 !important; padding: 0 !important; }
+    .printing main { margin: 0 !important; }
+}
+</style>
+{% endblock %}

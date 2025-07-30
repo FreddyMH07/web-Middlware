@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SAGAPI-Proto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload();">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stats mb-4 mb-xl-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h5 class="card-title text-uppercase text-muted mb-0">Total Requests</h5>
+                        <span class="h2 font-weight-bold mb-0">{{ total_requests }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-primary text-white rounded-circle shadow">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stats success mb-4 mb-xl-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h5 class="card-title text-uppercase text-muted mb-0">Success</h5>
+                        <span class="h2 font-weight-bold mb-0 text-success">{{ success_requests }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-success text-white rounded-circle shadow">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stats error mb-4 mb-xl-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h5 class="card-title text-uppercase text-muted mb-0">Failed</h5>
+                        <span class="h2 font-weight-bold mb-0 text-danger">{{ failed_requests }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-stats warning mb-4 mb-xl-0">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h5 class="card-title text-uppercase text-muted mb-0">TBS Transactions</h5>
+                        <span class="h2 font-weight-bold mb-0 text-warning">{{ total_tbs }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> Daily API Requests (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie"></i> Success Rate</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="successChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-history"></i> Recent TBS Transactions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Document No</th>
+                                <th>Partner</th>
+                                <th>Driver</th>
+                                <th>Lines</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td><strong>{{ transaction[0] }}</strong></td>
+                                <td>{{ transaction[1] }}</td>
+                                <td>{{ transaction[3] }}</td>
+                                <td><span class="badge bg-info">{{ transaction[4] }} items</span></td>
+                                <td><small class="text-muted">{{ transaction[2] }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No transactions yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Daily Chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyData = {{ daily_stats|tojson }};
+
+const dailyChart = new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: dailyData.map(d => d[0]),
+        datasets: [{
+            label: 'Total Requests',
+            data: dailyData.map(d => d[1]),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }, {
+            label: 'Success',
+            data: dailyData.map(d => d[2]),
+            borderColor: 'rgb(40, 167, 69)',
+            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Success Rate Pie Chart
+const successCtx = document.getElementById('successChart').getContext('2d');
+const successChart = new Chart(successCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Success', 'Failed'],
+        datasets: [{
+            data: [{{ success_requests }}, {{ failed_requests }}],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.8)',
+                'rgba(220, 53, 69, 0.8)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

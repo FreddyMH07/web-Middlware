@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Log Detail - SAGAPI-Proto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-eye"></i> Log Detail #{{ log[0] }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('logs') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Logs
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> Request Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="30%">Timestamp:</th>
+                        <td>{{ log[1] }}</td>
+                    </tr>
+                    <tr>
+                        <th>Endpoint:</th>
+                        <td><code>{{ log[2] }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if log[6] == 200 %}
+                                <span class="badge bg-success">{{ log[5] }}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ log[5] }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Response Code:</th>
+                        <td>
+                            {% if log[6] == 200 %}
+                                <span class="badge bg-success">{{ log[6] }}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ log[6] }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Agent Name:</th>
+                        <td>{{ log[3] or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Site:</th>
+                        <td>{{ log[4] or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>IP Address:</th>
+                        <td>{{ log[9] or '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar"></i> Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="{% if log[6] == 200 %}text-success{% else %}text-danger{% endif %}">
+                                {{ log[6] }}
+                            </h4>
+                            <small class="text-muted">Response Code</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-primary">
+                            {{ log[2].split('/')[-1] }}
+                        </h4>
+                        <small class="text-muted">Endpoint</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-upload"></i> Request Body</h5>
+            </div>
+            <div class="card-body">
+                {% if log[7] %}
+                <div class="json-viewer">
+                    <pre><code>{{ log[7] | safe }}</code></pre>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-inbox"></i> No request body
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-download"></i> Response Body</h5>
+            </div>
+            <div class="card-body">
+                {% if log[8] %}
+                <div class="json-viewer">
+                    <pre><code>{{ log[8] | safe }}</code></pre>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-inbox"></i> No response body
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Pretty print JSON
+document.addEventListener('DOMContentLoaded', function() {
+    const jsonViewers = document.querySelectorAll('.json-viewer pre code');
+    jsonViewers.forEach(function(element) {
+        try {
+            const json = JSON.parse(element.textContent);
+            element.textContent = JSON.stringify(json, null, 2);
+        } catch (e) {
+            // If not valid JSON, leave as is
+        }
+    });
+});
+</script>
+{% endblock %}
