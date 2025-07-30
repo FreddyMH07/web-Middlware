@@ -5,7 +5,7 @@ import datetime
 import uuid
 import os
 from functools import wraps
-import pandas as pd
+from openpyxl import Workbook
 from fpdf import FPDF
 import io
 from werkzeug.utils import secure_filename
@@ -503,13 +503,31 @@ def api_create_receiving_tbs():
 @login_required
 def export_logs_excel():
     conn = sqlite3.connect('sagapi_database.db')
-    df = pd.read_sql_query('SELECT * FROM api_logs ORDER BY timestamp DESC', conn)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM api_logs ORDER BY timestamp DESC')
+    logs = cursor.fetchall()
+    
+    # Get column names
+    cursor.execute('PRAGMA table_info(api_logs)')
+    columns = [column[1] for column in cursor.fetchall()]
     conn.close()
     
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='API Logs')
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "API Logs"
     
+    # Add headers
+    for col, header in enumerate(columns, 1):
+        ws.cell(row=1, column=col, value=header)
+    
+    # Add data
+    for row, data in enumerate(logs, 2):
+        for col, value in enumerate(data, 1):
+            ws.cell(row=row, column=col, value=value)
+    
+    output = io.BytesIO()
+    wb.save(output)
     output.seek(0)
     
     return send_file(
@@ -523,18 +541,52 @@ def export_logs_excel():
 @login_required
 def export_transactions_excel():
     conn = sqlite3.connect('sagapi_database.db')
+    cursor = conn.cursor()
     
-    # Export receiving_tbs
-    df_tbs = pd.read_sql_query('SELECT * FROM receiving_tbs ORDER BY timestamp DESC', conn)
-    df_lines = pd.read_sql_query('SELECT * FROM order_line ORDER BY receiving_tbs_id', conn)
+    # Get receiving_tbs data
+    cursor.execute('SELECT * FROM receiving_tbs ORDER BY timestamp DESC')
+    tbs_data = cursor.fetchall()
+    cursor.execute('PRAGMA table_info(receiving_tbs)')
+    tbs_columns = [column[1] for column in cursor.fetchall()]
+    
+    # Get order_line data
+    cursor.execute('SELECT * FROM order_line ORDER BY receiving_tbs_id')
+    lines_data = cursor.fetchall()
+    cursor.execute('PRAGMA table_info(order_line)')
+    lines_columns = [column[1] for column in cursor.fetchall()]
     
     conn.close()
     
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_tbs.to_excel(writer, index=False, sheet_name='Receiving TBS')
-        df_lines.to_excel(writer, index=False, sheet_name='Order Lines')
+    # Create workbook
+    wb = Workbook()
     
+    # Create TBS sheet
+    ws1 = wb.active
+    ws1.title = "Receiving TBS"
+    
+    # Add TBS headers
+    for col, header in enumerate(tbs_columns, 1):
+        ws1.cell(row=1, column=col, value=header)
+    
+    # Add TBS data
+    for row, data in enumerate(tbs_data, 2):
+        for col, value in enumerate(data, 1):
+            ws1.cell(row=row, column=col, value=value)
+    
+    # Create Order Lines sheet
+    ws2 = wb.create_sheet("Order Lines")
+    
+    # Add Order Lines headers
+    for col, header in enumerate(lines_columns, 1):
+        ws2.cell(row=1, column=col, value=header)
+    
+    # Add Order Lines data
+    for row, data in enumerate(lines_data, 2):
+        for col, value in enumerate(data, 1):
+            ws2.cell(row=row, column=col, value=value)
+    
+    output = io.BytesIO()
+    wb.save(output)
     output.seek(0)
     
     return send_file(
