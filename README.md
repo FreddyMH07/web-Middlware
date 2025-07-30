@@ -155,9 +155,9 @@ Database & Middleware Developer
 ## Tech Stack
 
 - **Backend**: Python Flask
-- **Database**: SQLite
+- **Database**: SQLite (auto-initialized)
 - **Frontend**: Bootstrap 5 + Chart.js
-- **Export**: pandas + openpyxl (Excel)
+- **Export**: openpyxl (Excel)
 - **Deployment**: Railway
 
 ## License

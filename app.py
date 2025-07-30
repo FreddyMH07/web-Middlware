@@ -13,6 +13,23 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'SAG_secret_key_2025'
 
+# Ensure database exists function
+def ensure_db_exists():
+    """Ensure database and tables exist before any operation"""
+    try:
+        conn = sqlite3.connect('sagapi_database.db')
+        cursor = conn.cursor()
+        
+        # Check if users table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+        if not cursor.fetchone():
+            init_db()
+        
+        conn.close()
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+        init_db()
+
 # Database initialization
 def init_db():
     conn = sqlite3.connect('sagapi_database.db')
@@ -136,11 +153,16 @@ def login_required(f):
 # Routes
 @app.route('/')
 def index():
+    # Ensure database exists on first access
+    ensure_db_exists()
     return redirect(url_for('dashboard'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        # Ensure database exists before login attempt
+        ensure_db_exists()
+        
         username = request.form['username']
         password = request.form['password']
         
@@ -600,3 +622,6 @@ if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
+else:
+    # For production deployment (gunicorn), ensure database is initialized
+    init_db()
