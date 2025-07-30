@@ -24,16 +24,19 @@ Aplikasi web middleware untuk monitoring dan prototipe API yang dibangun menggun
 
 ## Deployment
 
+### 🌐 Live Application
+**Production URL:** https://web-middlware-production.up.railway.app
+
 ### Railway Deployment
-1. Push ke GitHub repository
+1. Push ke GitHub repository: https://github.com/FreddyMH07/web-Middlware.git
 2. Connect ke Railway
 3. Deploy otomatis menggunakan Procfile
 
 ### Local Development
 ```bash
 # Clone repository
-git clone <repository-url>
-cd sagapi-proto
+git clone https://github.com/FreddyMH07/web-Middlware.git
+cd web-Middlware
 
 # Install dependencies
 pip install -r requirements.txt

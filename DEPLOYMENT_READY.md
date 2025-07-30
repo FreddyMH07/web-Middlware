@@ -74,3 +74,15 @@ Auto-created tables:
 
 ## 🎯 Ready for Production!
 All files have been cleaned and optimized for deployment.
+
+## 🌐 Live Application
+**Production URL:** https://web-middlware-production.up.railway.app
+
+### Application Access:
+- **Dashboard:** https://web-middlware-production.up.railway.app/
+- **API Login:** https://web-middlware-production.up.railway.app/api/auth/login
+- **API TBS:** https://web-middlware-production.up.railway.app/api/receiving-tbs/create
+- **Monitoring:** https://web-middlware-production.up.railway.app/logs
+- **Transactions:** https://web-middlware-production.up.railway.app/transactions
+
+### Status: ✅ DEPLOYED & READY!
