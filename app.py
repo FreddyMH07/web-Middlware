@@ -157,6 +157,35 @@ def index():
     ensure_db_exists()
     return redirect(url_for('dashboard'))
 
+# API Health Check Endpoints for Testing
+@app.route('/api/health', methods=['GET'])
+def api_health():
+    """Simple health check endpoint for API testing"""
+    return jsonify({
+        "status": "healthy",
+        "service": "SAGAPI-Proto",
+        "version": "1.0.0",
+        "timestamp": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }), 200
+
+@app.route('/api/test', methods=['GET', 'POST'])
+def api_test():
+    """Test endpoint that accepts both GET and POST"""
+    method = request.method
+    data = request.get_json() if request.is_json else None
+    
+    response = {
+        "status": "success",
+        "method": method,
+        "message": f"API test successful via {method}",
+        "timestamp": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    
+    if data:
+        response["received_data"] = data
+    
+    return jsonify(response), 200
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -421,10 +450,12 @@ def api_create_receiving_tbs():
             log_api_request('/api/receiving-tbs/create', 'error', 400, data, response)
             return jsonify(response), 400
         
-        # Check authorization header
+        # Check authorization - either from header or body
         auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            response = {"code": 401, "message": "Authorization header required"}
+        token_from_body = data.get('token')
+        
+        if not auth_header and not token_from_body:
+            response = {"code": 401, "message": "Authorization header or token in body required"}
             log_api_request('/api/receiving-tbs/create', 'error', 401, data, response)
             return jsonify(response), 401
         

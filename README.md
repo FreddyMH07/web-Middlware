@@ -85,6 +85,7 @@ Response (Success):
 ### Create TBS Transaction
 **POST /api/receiving-tbs/create**
 
+**Option 1: Token in Header (Recommended)**
 Headers:
 - Content-Type: application/json
 - Authorization: Bearer {access_token}
@@ -92,6 +93,45 @@ Headers:
 Request Body:
 ```json
 {
+  "jsonrpc": "2.0",
+  "params": {
+    "order_data": [{
+      "partner_id": "PT Sumber Sawit",
+      "journal_id": "Bank Agro",
+      "date_order": "31/07/2025 08:00:00",
+      "officers": "Joko Santoso",
+      "keterangan_description": "Penerimaan TBS harian",
+      "driver_name": "Budi",
+      "vehicle_no": "BE 1234 XX",
+      "destination_warehouse_id": "Gudang Lampung",
+      "branch_id": "Lampung Site",
+      "order_line": [{
+        "product_code": "TBS-AGRO-001",
+        "qty_brutto": 10000,
+        "qty_tara": 300,
+        "qty_netto": 9700,
+        "product_uom": "kg",
+        "sortation_percent": 5,
+        "sortation_weight": 485,
+        "qty_netto2": 9215,
+        "price_unit": 1500,
+        "product_qty": 1,
+        "incoming_date": "31/07/2025 08:10:00",
+        "outgoing_date": "31/07/2025 08:30:00"
+      }]
+    }]
+  }
+}
+```
+
+**Option 2: Token in Body (Alternative)**
+Headers:
+- Content-Type: application/json
+
+Request Body:
+```json
+{
+  "token": "your_access_token_here",
   "jsonrpc": "2.0",
   "params": {
     "order_data": [{
